@@ -23,6 +23,12 @@ namespace parser
         float x, y, z, w;
     };
 
+    struct ray
+    {
+        float t;
+        Vec3f e,d;
+    };
+
     struct Camera
     {
         Vec3f position;
@@ -79,16 +85,38 @@ namespace parser
     {
         //Data
         Vec3i background_color;
+
         float shadow_ray_epsilon;
+
         int max_recursion_depth;
+        // Specifies how many bounces the ray makes off of mirror-like objects. 
+        // Applicable only when a material has nonzero MirrorReflectance value. 
+        // Primary rays are assumed to start with zero bounce count.
+
         std::vector<Camera> cameras;
+
         Vec3f ambient_light;
+        // Radiance
+        
         std::vector<PointLight> point_lights;
+        // Light source
+        
         std::vector<Material> materials;
+        // Use material_id's of each object
+
         std::vector<Vec3f> vertex_data;
+        // Use vertex_id's of each triangle
+
         std::vector<Mesh> meshes;
+        // Object (triangles)
+        // Each mesh is composed of several faces. 
+        // A face is actually a triangle which contains three vertices.
+
         std::vector<Triangle> triangles;
+        // Object
+
         std::vector<Sphere> spheres;
+        // Object
 
         //Functions
         void loadFromXml(const std::string& filepath);
