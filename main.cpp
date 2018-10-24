@@ -9,22 +9,23 @@ typedef unsigned char RGB[3];
 using namespace std;
 using namespace parser;
 
-Vec3f compute_ray(Vec3f e, Vec3f s)
+float irradiance(float I, float d)
 {
-    return Vec3f(s.x-e.x, s.y-e.y, s.z-e.z);
+    return I/(d*d);
 }
 
-void diffuse_shading()
-{
-    ;
-}
-
-void ambient_shading()
+void ambient_shading(float ref_coeff)
 {
     ;
 }
 
-void specular_shading()
+void diffuse_shading(float ref_coeff)
+{
+    ;
+}
+
+
+void specular_shading(float ref_coeff)
 {
     ;
 }
@@ -101,13 +102,29 @@ void printPoint(Vec3f p)
     cout<<"("<<p.x<<", "<<p.y<<", "<<p.z<<")"<<endl;
 }
 
+Vec3f crossProduct(const Vec3f &v1, const Vec3f &v2)
+{
+    return Vec3f(v1.y*v2.z-v1.z*v2.y, -(v1.x*v2.z-v1.z*v2.x), v1.x*v2.y-v1.y*v2.x);
+}
+
+Vec3f revert(const Vec3f &point)
+{
+    return Vec3f(-point.x, -point.y, -point.z);
+}
+
+Vec3f scalarMultiplication(const Vec3f &v, float factor)
+{
+    return Vec3f(v.x*factor, v.y*factor, v.z*factor);
+}
+
 int main(int argc, char* argv[])
 {
     //Testing
     //ray r = {0, {3, 5, 0}, {0, -5, 0}};
-    //Vec3f corner_a={0,-1,0}, corner_b={0,0,2}, corner_c={0,1,0}, center = {0, 0, 0};
+    Vec3f corner_a={1,0,0}, corner_b={0,1,0}, corner_c={0,1,0}, center = {0, 0, 0};
     //cout<<triangle_intersect(r, corner_a, corner_b, corner_c, 0, numeric_limits<float>::infinity())<<endl;
     //cout<<sphere_intersect(r, center, 3)<<endl;
+    printPoint(crossProduct(corner_a,corner_b));
     //End testing
     
     if(argc<2)
@@ -155,26 +172,32 @@ int main(int argc, char* argv[])
 
     //MAIN
 
-    for(auto &camera : scene.cameras)
+    /*for(auto &camera : scene.cameras)
     {
-        string img_name=camera.image_name;
-        int img_width = camera.image_width, img_height = camera.image_height;
+        string img_name = camera.image_name;
+        int img_width = camera.image_width, 
+            img_height = camera.image_height;
+        Vec3f u = crossProduct(camera.up, revert(camera.gaze));
+        float horizontal = (r-l)/img_width,
+              vertical = (t-b)/img_height;
         unsigned char* image = new unsigned char [img_width * img_height * 3];
-        // int pixel_i = 0;
-        // for (int y = 0; y < height; ++y)
-        // {
-        //     for (int x = 0; x < width; ++x)
-        //     {
+        int pixel_i = 0;
+        Vec3f pixel_center = {l+horizontal*0.5, b+vertical*0.5, camera.gaze*camera.near_distance};
+        for (int y = 0; y < img_height; ++y)
+        {
+            for (int x = 0; x < img_width; ++x)
+            {
                 //ray r;
                 //r.e = eyepoint;
                 //r.d = compute_ray(r.e, s);
                 float tmin = numeric_limits<float>::infinity();
+                */
                 /*for(auto &mesh : scene.meshes)
                 {
 
                 }*/
 
-                for(auto &triangle : scene.triangles)
+                /*for(auto &triangle : scene.triangles)
                 {
                   Material triangle_material = scene.materials[triangle.material_id];
                   Vec3f corner_a = scene.vertex_data[triangle.indices.v0_id], 
@@ -193,8 +216,16 @@ int main(int argc, char* argv[])
                   cout<<"Sphere:"<<endl;
                   printPoint(sphere_center);
                 }
-        //     }
-        // }
-        //write_ppm(argv[2], image, width, height);
-    }
+                pixel_center.x += horizontal;
+            }
+            pixel_center.y += vertical;
+        }
+        write_ppm(argv[2], image, img_width, img_height);
+        delete [] image;
+    }*/
 }
+/*
+//Notes:
+-> A ray can intersect with multiple objects at the same time. Use closest t always.
+-> 
+*/

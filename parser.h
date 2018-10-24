@@ -12,6 +12,7 @@ namespace parser
     {
         Vec3f(){};
         Vec3f(float _x, float _y, float _z){x=_x; y=_y; z=_z;};
+        Vec3f(const Vec3f &point){x=point.x; y=point.y; z=point.z;}
         float x, y, z;
     };
 
@@ -19,6 +20,7 @@ namespace parser
     {
         Vec3i(){};
         Vec3i(int _x, int _y, int _z){x=_x; y=_y; z=_z;};
+        Vec3i(const Vec3f &point){x=point.x; y=point.y; z=point.z;}
         int x, y, z;
     };
 
