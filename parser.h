@@ -10,11 +10,15 @@ namespace parser
     //so that you are not enforced to adopt any style or design.
     struct Vec3f
     {
+        Vec3f(){};
+        Vec3f(float _x, float _y, float _z){x=_x; y=_y; z=_z;};
         float x, y, z;
     };
 
     struct Vec3i
     {
+        Vec3i(){};
+        Vec3i(int _x, int _y, int _z){x=_x; y=_y; z=_z;};
         int x, y, z;
     };
 

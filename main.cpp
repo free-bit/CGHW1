@@ -9,9 +9,9 @@ typedef unsigned char RGB[3];
 using namespace std;
 using namespace parser;
 
-void compute_ray()
+Vec3f compute_ray(Vec3f e, Vec3f s)
 {
-    ;
+    return Vec3f(s.x-e.x, s.y-e.y, s.z-e.z);
 }
 
 void diffuse_shading()
@@ -29,6 +29,8 @@ void specular_shading()
     ;
 }
 
+//Ray-Triangle intersection
+//Parameters: r parameter is mutable, others are constant
 bool triangle_intersect(ray &r, const Vec3f &corner_a, const Vec3f &corner_b, const Vec3f &corner_c, const float &t0, const float &t1)
 { 
     float a = corner_a.x - corner_b.x,
@@ -68,20 +70,54 @@ bool triangle_intersect(ray &r, const Vec3f &corner_a, const Vec3f &corner_b, co
     return true;
 }
 
-void sphere_intersect()
+//Dot product of two vectors
+//Parameters: All are constant
+float dot_product(const Vec3f &v1, const Vec3f &v2)
 {
-    ;
+    return (v1.x*v2.x + v1.y*v2.y + v1.z*v2.z);
+}
+
+//Ray-Sphere intersection
+//Parameters: r parameter is mutable, others are constant
+bool sphere_intersect(ray &r, const Vec3f &center, const float &R)
+{
+    Vec3f ce = {r.e.x - center.x, r.e.y - center.y, r.e.z - center.z};
+    float ce_squared = dot_product(ce, ce),
+          d_squared = dot_product(r.d, r.d),
+          d_dot_ce = dot_product(r.d, ce);
+    
+    float discriminant = d_dot_ce*d_dot_ce - (d_squared * (ce_squared - R*R));
+    cout<<discriminant<<endl;
+    if(discriminant<0)
+        return false;
+
+    float discriminant_sqrt = sqrt(discriminant);
+    r.t = (-d_dot_ce - discriminant_sqrt)/d_squared; // Small value of t (closest intersection point) is stored.
+    return true;
+}
+
+void printPoint(Vec3f p)
+{
+    cout<<"("<<p.x<<", "<<p.y<<", "<<p.z<<")"<<endl;
 }
 
 int main(int argc, char* argv[])
 {
-    ray r = {0, {2, 0, 0}, {-2, 0, 3}};
-    Vec3f corner_a={0,-1,0}, corner_b={0,0,2}, corner_c={0,1,0};
-    cout<<triangle_intersect(r, corner_a, corner_b, corner_c, 0, numeric_limits<float>::infinity())<<endl;
-    // Sample usage for reading an XML scene file
-    //parser::Scene scene;
+    //Testing
+    //ray r = {0, {3, 5, 0}, {0, -5, 0}};
+    //Vec3f corner_a={0,-1,0}, corner_b={0,0,2}, corner_c={0,1,0}, center = {0, 0, 0};
+    //cout<<triangle_intersect(r, corner_a, corner_b, corner_c, 0, numeric_limits<float>::infinity())<<endl;
+    //cout<<sphere_intersect(r, center, 3)<<endl;
+    //End testing
+    
+    if(argc<2)
+    {
+        cout<<"Missing parameters"<<endl;
+        exit(-1);
+    }
+    parser::Scene scene;
 
-    //scene.loadFromXml(argv[1]);
+    scene.loadFromXml(argv[1]);
 
     // The code below creates a test pattern and writes
     // it to a PPM file to demonstrate the usage of the
@@ -119,34 +155,46 @@ int main(int argc, char* argv[])
 
     //MAIN
 
-    /*for(auto &camera : scene.cameras)
+    for(auto &camera : scene.cameras)
     {
         string img_name=camera.image_name;
         int img_width = camera.image_width, img_height = camera.image_height;
         unsigned char* image = new unsigned char [img_width * img_height * 3];
-        for(auto &pixel : image)
-        {
-            compute_ray();
-            int tmin=INT_MAX;
-            for(auto &mesh : scene.meshes)
-            {
+        // int pixel_i = 0;
+        // for (int y = 0; y < height; ++y)
+        // {
+        //     for (int x = 0; x < width; ++x)
+        //     {
+                //ray r;
+                //r.e = eyepoint;
+                //r.d = compute_ray(r.e, s);
+                float tmin = numeric_limits<float>::infinity();
+                /*for(auto &mesh : scene.meshes)
+                {
 
-            }
+                }*/
 
-            for(auto &triangle : scene.triangles)
-            {
-                
-            }
+                for(auto &triangle : scene.triangles)
+                {
+                  Material triangle_material = scene.materials[triangle.material_id];
+                  Vec3f corner_a = scene.vertex_data[triangle.indices.v0_id], 
+                        corner_b = scene.vertex_data[triangle.indices.v1_id], 
+                        corner_c = scene.vertex_data[triangle.indices.v2_id];
+                  cout<<"Triangle:"<<endl;
+                  printPoint(corner_a);
+                  printPoint(corner_b);
+                  printPoint(corner_c);
+                }
 
-            for(auto &spheres : scene.spheres)
-            {
-                
-            }
-
-        }
-
-    }*/
-
-    //write_ppm(argv[2], image, width, height);
-
+                for(auto &sphere : scene.spheres)
+                {
+                  Material sphere_material = scene.materials[sphere.material_id];
+                  Vec3f sphere_center = scene.vertex_data[sphere.center_vertex_id];
+                  cout<<"Sphere:"<<endl;
+                  printPoint(sphere_center);
+                }
+        //     }
+        // }
+        //write_ppm(argv[2], image, width, height);
+    }
 }
