@@ -120,11 +120,14 @@ Vec3f scalarMultiplication(const Vec3f &v, float factor)
 int main(int argc, char* argv[])
 {
     //Testing
-    //ray r = {0, {3, 5, 0}, {0, -5, 0}};
-    Vec3f corner_a={1,0,0}, corner_b={0,1,0}, corner_c={0,1,0}, center = {0, 0, 0};
+    ray r = {0, {3, 5, 0}, {0, -5, 0}}, r2(r), r3;
+    r3=r;
+    Vec3f corner_a={1,0,0}, corner_b={0,1,0}, corner_c(corner_a), center = {0, 0, 0};
     //cout<<triangle_intersect(r, corner_a, corner_b, corner_c, 0, numeric_limits<float>::infinity())<<endl;
     //cout<<sphere_intersect(r, center, 3)<<endl;
-    printPoint(crossProduct(corner_a,corner_b));
+    cout<<r3.t<<endl;
+    printPoint(r3.e);
+    printPoint(r3.d);
     //End testing
     
     if(argc<2)

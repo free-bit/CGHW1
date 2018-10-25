@@ -10,18 +10,19 @@ namespace parser
     //so that you are not enforced to adopt any style or design.
     struct Vec3f
     {
-        Vec3f(){};
-        Vec3f(float _x, float _y, float _z){x=_x; y=_y; z=_z;};
-        Vec3f(const Vec3f &point){x=point.x; y=point.y; z=point.z;}
         float x, y, z;
+        Vec3f(){};
+        Vec3f(float _x, float _y, float _z){this->x=_x; this->y=_y; this->z=_z;};
+        Vec3f(const Vec3f &v2){*this=v2;}
+        void operator=(const Vec3f &v2){this->x=v2.x; this->y=v2.y; this->z=v2.z;}
     };
 
     struct Vec3i
     {
+        int x, y, z;
         Vec3i(){};
         Vec3i(int _x, int _y, int _z){x=_x; y=_y; z=_z;};
         Vec3i(const Vec3f &point){x=point.x; y=point.y; z=point.z;}
-        int x, y, z;
     };
 
     struct Vec4f
@@ -33,6 +34,10 @@ namespace parser
     {
         float t;
         Vec3f e,d;
+        ray(){};
+        ray(const float &_t, const Vec3f &_e, const Vec3f &_d){this->t=_t; this->e=_e; this->d=_d;};
+        ray(const ray &r2){*this=r2;}
+        void operator=(const ray &r2){this->t=r2.t; this->e=r2.e; this->d=r2.d;}
     };
 
     struct Camera
