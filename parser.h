@@ -5,6 +5,7 @@
 #include <vector>
 #include <cmath>
 #include <limits>
+#include <iostream>
 
 namespace parser
 {
@@ -16,22 +17,40 @@ namespace parser
         Vec3f(){};
         Vec3f(float _x, float _y, float _z){this->x=_x; this->y=_y; this->z=_z;};
         Vec3f(const Vec3f &v2){*this=v2;}
+        float length() const
+        {
+          return sqrt(x*x + y*y + z*z);
+        }
+        Vec3f normalize() const
+        {
+          float length_inv = 1/(this->length());
+          return (*this)*length_inv;
+        }
+
+        Vec3f elementwiseMultip(const Vec3f &v2) const
+        {
+          return Vec3f(this->x*v2.x, this->y*v2.y, this->z*v2.z);
+        }
+
         void operator=(const Vec3f &v2){this->x=v2.x; this->y=v2.y; this->z=v2.z;}
+
         Vec3f operator+(const Vec3f &v2) const
         {
           return Vec3f(this->x+v2.x, this->y+v2.y, this->z+v2.z);
         }
+
         Vec3f operator-(const Vec3f &v2) const
         {
           return Vec3f(this->x-v2.x, this->y-v2.y, this->z-v2.z);
         }
+
         Vec3f crossProduct(const Vec3f &v2) const
         {
             return Vec3f(this->y*v2.z-this->z*v2.y, -(this->x*v2.z-this->z*v2.x), this->x*v2.y-this->y*v2.x);
         }
 
         //scaler_multiplication
-        Vec3f operator*(float &factor) const
+        Vec3f operator*(float factor) const
         {
             return Vec3f(this->x*factor, this->y*factor, this->z*factor);
         }
@@ -101,7 +120,7 @@ namespace parser
         int v0_id;
         int v1_id;
         int v2_id;
-        Vec3f corner_a, corner_b, corner_c;
+        Vec3f corner_a, corner_b, corner_c, normal;
     };
 
     struct Mesh
@@ -217,7 +236,7 @@ namespace parser
         }
 
       private:
-        bool triangle_mesh_intersect_subroutine(const Face &corners, const float &t0, const float &t1)
+        bool triangle_mesh_intersect_subroutine(Face &corners, const float &t0, const float &t1)
         {
             Vec3f ab=corners.corner_a-corners.corner_b,
                   ac=corners.corner_a-corners.corner_c,
@@ -256,6 +275,7 @@ namespace parser
             if(t < this->t)
             {
               this->t = t;
+              corners.normal=((corners.corner_b-corners.corner_a).crossProduct(corners.corner_c-corners.corner_a)).normalize();
               return true;
             }
             return false;

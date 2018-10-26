@@ -17,9 +17,13 @@ void ambient_shading(float ref_coeff)
     ;
 }
 
-void diffuse_shading(float ref_coeff)
+Vec3f diffuse_shading(const Vec3f &wi,
+                      const Vec3f &n,
+                      const Vec3f &coeff,
+                      const Vec3f &I,
+                      const float &r)
 {
-    ;
+  return coeff.elementwiseMultip((I*(1/(r*r)))*(max((float)0, n*wi)));
 }
 
 
@@ -112,8 +116,6 @@ int main(int argc, char* argv[])
         Vec3f u_axis = camera.up.crossProduct(-camera.gaze);
         float horizontal = (camera.near_plane.r-camera.near_plane.l)/img_width,
               vertical = (camera.near_plane.t-camera.near_plane.b)/img_height;
-        cout<<horizontal<<endl;
-        cout<<vertical<<endl;
 
         unsigned char* image = new unsigned char [img_width * img_height * 3];
 
@@ -148,31 +150,67 @@ int main(int argc, char* argv[])
                 {
                   Material material;
                   int material_id;
+
+                  Vec3f point_of_intersection(r.e + r.d*r.t);
+                  Vec3f normal;
+
                   switch(r.c)
                   {
                     case 's':
-                      material_id=((Sphere *) r.obj)->material_id;
+                    {
+                      Sphere* ptr = ((Sphere *) r.obj);
+                      material_id = ptr->material_id;
+                      normal = (point_of_intersection-ptr->center)*(1/ptr->radius); //Normalized
                       break;
+                    }
                     case 'm':
-                      material_id=((Mesh *) r.obj)->material_id;
+                    {
+                      Mesh* ptr = ((Mesh *) r.obj);
+                      material_id = ptr->material_id;
+                      normal = ptr->faces[0].normal;
                       break;
+                    }
                     case 't':
-                      material_id=((Triangle *) r.obj)->material_id;
+                    {
+                      Triangle* ptr = ((Triangle *) r.obj);
+                      material_id = ptr->material_id;
+                      normal = ptr->indices.normal;
                       break;
+                    }
                     default:
                       cout<<"error"<<endl;
                   }
                   material_id--; //zero-indexed
-                  material.ambient = scene.materials[material_id].ambient; //ambient coeff
-                  material.diffuse = scene.materials[material_id].diffuse;
-                  material.specular = scene.materials[material_id].specular;
-                  material.mirror = scene.materials[material_id].mirror;
+                  material.ambient = scene.materials[material_id].ambient;  //ambient coeff
+                  material.diffuse = scene.materials[material_id].diffuse;  //diffuse coeff
+                  material.specular = scene.materials[material_id].specular;//specular coeff
+                  material.mirror = scene.materials[material_id].mirror;    //mirror coeff
                   material.phong_exponent = scene.materials[material_id].phong_exponent;
-                  Vec3f ambient_color(scene.ambient_light.x*material.ambient.x,scene.ambient_light.y*material.ambient.y,scene.ambient_light.z*material.ambient.z);
-                  //TODO: might require clamping
-                  image[pixel_channel++]=ambient_color.x;
-                  image[pixel_channel++]=ambient_color.y;
-                  image[pixel_channel++]=ambient_color.z;
+
+                  //Ambient component calculation
+                  Vec3f ambient_component(scene.ambient_light.elementwiseMultip(material.ambient));
+                  // TODO: might require clamping
+                  image[pixel_channel]= image[pixel_channel]+ambient_component.x > 255 ? 255 : image[pixel_channel]+ambient_component.x;
+                  image[pixel_channel+1]=image[pixel_channel+1]+ambient_component.y > 255 ? 255 : image[pixel_channel+1]+ambient_component.y;
+                  image[pixel_channel+2]=image[pixel_channel+2]+ambient_component.z > 255 ? 255 : image[pixel_channel+2]+ambient_component.z;
+
+                  //Diffuse component calculation
+                  for(auto &light : scene.point_lights)
+                  {
+                    Vec3f vector2light(light.position-point_of_intersection);
+                    float distance2light = vector2light.length();   //float distance to point light
+                    vector2light = vector2light*(1/distance2light); //Normalized vector
+                    Vec3f diffuse_component = diffuse_shading(vector2light,
+                                                              normal,
+                                                              material.diffuse,
+                                                              light.intensity,
+                                                              distance2light);
+                    image[pixel_channel]= image[pixel_channel]+diffuse_component.x > 255 ? 255 : image[pixel_channel]+diffuse_component.x;
+                    image[pixel_channel+1]=image[pixel_channel+1]+diffuse_component.y > 255 ? 255 : image[pixel_channel+1]+diffuse_component.y;
+                    image[pixel_channel+2]=image[pixel_channel+2]+diffuse_component.z > 255 ? 255 : image[pixel_channel+2]+diffuse_component.z;
+                  }
+                  //...
+                  pixel_channel+=3;
                 }
                 else
                 {
@@ -191,6 +229,5 @@ int main(int argc, char* argv[])
     // #endif
 }
 /*
-//Notes:
--> A ray can intersect with multiple objects at the same time. Use closest t always.
+//TODO: Eliminate unnecessary computing of normals in mesh.
 */
