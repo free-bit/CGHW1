@@ -31,7 +31,7 @@ void parser::Scene::loadFromXml(const std::string& filepath)
     {
         stream << "0 0 0" << std::endl;
     }
-    stream >> background_color.x >> background_color.y >> background_color.z;
+    stream >> background_color.r >> background_color.g >> background_color.b;
 
     //Get ShadowRayEpsilon
     element = root->FirstChildElement("ShadowRayEpsilon");
@@ -81,7 +81,7 @@ void parser::Scene::loadFromXml(const std::string& filepath)
         stream >> camera.position.x >> camera.position.y >> camera.position.z;
         stream >> camera.gaze.x >> camera.gaze.y >> camera.gaze.z;
         stream >> camera.up.x >> camera.up.y >> camera.up.z;
-        stream >> camera.near_plane.x >> camera.near_plane.y >> camera.near_plane.z >> camera.near_plane.w;
+        stream >> camera.near_plane.l >> camera.near_plane.r >> camera.near_plane.b >> camera.near_plane.t;
         stream >> camera.near_distance;
         stream >> camera.image_width >> camera.image_height;
         stream >> camera.image_name;
@@ -165,6 +165,11 @@ void parser::Scene::loadFromXml(const std::string& filepath)
         while (!(stream >> face.v0_id).eof())
         {
             stream >> face.v1_id >> face.v2_id;
+            //Added
+            face.corner_a = vertex_data[face.v0_id-1];
+            face.corner_b = vertex_data[face.v1_id-1];
+            face.corner_c = vertex_data[face.v2_id-1];
+            //
             mesh.faces.push_back(face);
         }
         stream.clear();
@@ -189,6 +194,11 @@ void parser::Scene::loadFromXml(const std::string& filepath)
         stream << child->GetText() << std::endl;
         stream >> triangle.indices.v0_id >> triangle.indices.v1_id >> triangle.indices.v2_id;
 
+        //Added
+        triangle.indices.corner_a = vertex_data[triangle.indices.v0_id-1];
+        triangle.indices.corner_b = vertex_data[triangle.indices.v1_id-1];
+        triangle.indices.corner_c = vertex_data[triangle.indices.v2_id-1];
+        //
         triangles.push_back(triangle);
         element = element->NextSiblingElement("Triangle");
     }
@@ -206,6 +216,10 @@ void parser::Scene::loadFromXml(const std::string& filepath)
         child = element->FirstChildElement("Center");
         stream << child->GetText() << std::endl;
         stream >> sphere.center_vertex_id;
+
+        //Added
+        sphere.center = vertex_data[sphere.center_vertex_id-1];
+        //
 
         child = element->FirstChildElement("Radius");
         stream << child->GetText() << std::endl;
