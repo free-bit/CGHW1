@@ -14,7 +14,7 @@ namespace parser
     struct Vec3f
     {
         float x, y, z;
-        Vec3f(){};
+        Vec3f(){this->x=0; this->y=0; this->z=0;};
         Vec3f(float _x, float _y, float _z){this->x=_x; this->y=_y; this->z=_z;};
         Vec3f(const Vec3f &v2){*this=v2;}
         float length() const

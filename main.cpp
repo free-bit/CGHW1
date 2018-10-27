@@ -139,6 +139,8 @@ int main(int argc, char* argv[])
         // int count_true=0,count_false=0;
         float shadow_ray_epsilon = scene.shadow_ray_epsilon;
         ray r;
+        r.c = '\0';
+        r.obj = NULL;
         r.e = camera.position; //eyepoint
         float v = camera.near_plane.b+vertical*0.5;
         for (int y = 0; y < img_height; y++)
@@ -263,4 +265,5 @@ int main(int argc, char* argv[])
 }
 /*
 //TODO: Eliminate unnecessary computing of normals in mesh.
+//TODO: Valgrind error check
 */
