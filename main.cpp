@@ -120,7 +120,7 @@ int main(int argc, char* argv[])
         unsigned char* image = new unsigned char [img_width * img_height * 3];
 
         int pixel_channel = 0;
-        int count_true=0,count_false=0;
+        // int count_true=0,count_false=0;
         ray r;
         r.e = camera.position; //eyepoint
         float v = camera.near_plane.b+vertical*0.5;
@@ -129,6 +129,9 @@ int main(int argc, char* argv[])
           float u = camera.near_plane.l+horizontal*0.5;
             for (int x = 0; x < img_width; x++)
             {
+                image[pixel_channel]=0;
+                image[pixel_channel+1]=0;
+                image[pixel_channel+2]=0;
                 //r.obj = NULL;
                 r.t = numeric_limits<float>::infinity();
                 r.d = camera.gaze*camera.near_distance + u_axis*u - camera.up*v;
@@ -188,11 +191,8 @@ int main(int argc, char* argv[])
                   material.phong_exponent = scene.materials[material_id].phong_exponent;
 
                   //Ambient component calculation
-                  Vec3f ambient_component(scene.ambient_light.elementwiseMultip(material.ambient));
+                  Vec3f accumulator(scene.ambient_light.elementwiseMultip(material.ambient));
                   // TODO: might require clamping
-                  image[pixel_channel]= image[pixel_channel]+ambient_component.x > 255 ? 255 : image[pixel_channel]+ambient_component.x;
-                  image[pixel_channel+1]=image[pixel_channel+1]+ambient_component.y > 255 ? 255 : image[pixel_channel+1]+ambient_component.y;
-                  image[pixel_channel+2]=image[pixel_channel+2]+ambient_component.z > 255 ? 255 : image[pixel_channel+2]+ambient_component.z;
 
                   //Diffuse component calculation
                   for(auto &light : scene.point_lights)
@@ -205,10 +205,12 @@ int main(int argc, char* argv[])
                                                               material.diffuse,
                                                               light.intensity,
                                                               distance2light);
-                    image[pixel_channel]= image[pixel_channel]+diffuse_component.x > 255 ? 255 : image[pixel_channel]+diffuse_component.x;
-                    image[pixel_channel+1]=image[pixel_channel+1]+diffuse_component.y > 255 ? 255 : image[pixel_channel+1]+diffuse_component.y;
-                    image[pixel_channel+2]=image[pixel_channel+2]+diffuse_component.z > 255 ? 255 : image[pixel_channel+2]+diffuse_component.z;
+                    accumulator=accumulator+diffuse_component;
                   }
+                  image[pixel_channel]=image[pixel_channel]+accumulator.x > 255 ? 255 : image[pixel_channel]+accumulator.x;
+                  image[pixel_channel+1]=image[pixel_channel+1]+accumulator.y > 255 ? 255 : image[pixel_channel+1]+accumulator.y;
+                  image[pixel_channel+2]=image[pixel_channel+2]+accumulator.z > 255 ? 255 : image[pixel_channel+2]+accumulator.z;
+
                   //...
                   pixel_channel+=3;
                 }

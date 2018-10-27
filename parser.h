@@ -262,7 +262,7 @@ namespace parser
                   M = a*eihf + b*gfdi + c*dheg;
 
             float t = -(f*akjb + e*jcal + d*blkc)/M;
-            if(t<0 || t>t1)
+            if(t<=t0 || t>t1)
                 return false;
 
             float gamma = (i*akjb + h*jcal + g*blkc)/M;
