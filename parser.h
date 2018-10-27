@@ -191,10 +191,10 @@ namespace parser
         void *obj;
         Vec3f e,d;
         ray(){};
-        ray(const float &_t, const Vec3f &_e, const Vec3f &_d){this->t=_t; this->e=_e; this->d=_d;};
+        ray(const Vec3f &_e, const Vec3f &_d, float _t = std::numeric_limits<float>::infinity()){this->t=_t; this->e=_e; this->d=_d;};
         ray(const ray &r2){*this=r2;}
         void operator=(const ray &r2){this->t=r2.t; this->e=r2.e; this->d=r2.d;}
-        void sphere_intersect(Sphere &sphere)
+        void sphere_intersect(Sphere &sphere, const float &t0)
         {
             Vec3f ce = {this->e.x - sphere.center.x, this->e.y - sphere.center.y, this->e.z - sphere.center.z};
             float ce_squared = ce*ce,
@@ -207,18 +207,18 @@ namespace parser
 
             float discriminant_sqrt = sqrt(discriminant);
             float _t = (-d_dot_ce - discriminant_sqrt)/d_squared; // Small value of t (closest intersection point) is stored.
-            if(_t<t)
+            if(_t<t && _t>=t0)
             {
               this->t = _t;
               this->obj = &sphere;
               this->c='s';
             }
         }
-        void mesh_intersect(Mesh &mesh, const float &t0, const float &t1)
+        void mesh_intersect(Mesh &mesh, const float &t0)
         {
           for(auto &face : mesh.faces)
           {
-            if(triangle_mesh_intersect_subroutine(face, t0, t1))
+            if(triangle_mesh_intersect_subroutine(face, t0))
             {
               this->obj = &mesh;
               this->c='m';
@@ -226,9 +226,9 @@ namespace parser
           }
         }
 
-        void triangle_intersect(Triangle &triangle, const float &t0, const float &t1)
+        void triangle_intersect(Triangle &triangle, const float &t0)
         {
-          if(triangle_mesh_intersect_subroutine(triangle.indices, t0, t1))
+          if(triangle_mesh_intersect_subroutine(triangle.indices, t0))
           {
             this->obj = &triangle;
             this->c='t';
@@ -236,7 +236,7 @@ namespace parser
         }
 
       private:
-        bool triangle_mesh_intersect_subroutine(Face &corners, const float &t0, const float &t1)
+        bool triangle_mesh_intersect_subroutine(Face &corners, const float &t0)
         {
             Vec3f ab=corners.corner_a-corners.corner_b,
                   ac=corners.corner_a-corners.corner_c,
@@ -262,7 +262,7 @@ namespace parser
                   M = a*eihf + b*gfdi + c*dheg;
 
             float t = -(f*akjb + e*jcal + d*blkc)/M;
-            if(t<=t0 || t>t1)
+            if(t<t0 || t>std::numeric_limits<float>::infinity())
                 return false;
 
             float gamma = (i*akjb + h*jcal + g*blkc)/M;

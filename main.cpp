@@ -17,19 +17,14 @@ void ambient_shading(float ref_coeff)
     ;
 }
 
-Vec3f diffuse_shading(const Vec3f &wi,
-                      const Vec3f &n,
-                      const Vec3f &coeff,
-                      const Vec3f &I,
-                      const float &r)
+Vec3f ds_shading(const Vec3f &v, //v is used for both wi & h
+                 const Vec3f &n,
+                 const Vec3f &coeff,
+                 const Vec3f &I,
+                 const float &r,
+                 const float &p=1)
 {
-  return coeff.elementwiseMultip((I*(1/(r*r)))*(max((float)0, n*wi)));
-}
-
-
-void specular_shading(float ref_coeff)
-{
-    ;
+  return coeff.elementwiseMultip((I*(1/(r*r)))*(pow(max((float)0, n*v),p)));
 }
 
 //Ray-Triangle intersection
@@ -50,6 +45,28 @@ void printPoint(Vec3f p)
 Vec3f revert(const Vec3f &point)
 {
     return Vec3f(-point.x, -point.y, -point.z);
+}
+
+void intersection_test(ray &r,
+                       vector<Mesh> &meshes,
+                       vector<Triangle> &triangles,
+                       vector<Sphere> &spheres,
+                       float shadow_ray_epsilon)
+{
+  for(auto &mesh : meshes)
+  {
+    r.mesh_intersect(mesh, shadow_ray_epsilon);
+  }
+
+  for(auto &triangle : triangles)
+  {
+    r.triangle_intersect(triangle, shadow_ray_epsilon);
+  }
+
+  for(auto &sphere : spheres)
+  {
+    r.sphere_intersect(sphere, shadow_ray_epsilon);
+  }
 }
 
 int main(int argc, char* argv[])
@@ -107,7 +124,6 @@ int main(int argc, char* argv[])
     } Remove later*/
 
     //MAIN
-
     for(auto &camera : scene.cameras)
     {
         string img_name = camera.image_name;
@@ -121,6 +137,7 @@ int main(int argc, char* argv[])
 
         int pixel_channel = 0;
         // int count_true=0,count_false=0;
+        float shadow_ray_epsilon = scene.shadow_ray_epsilon;
         ray r;
         r.e = camera.position; //eyepoint
         float v = camera.near_plane.b+vertical*0.5;
@@ -135,20 +152,13 @@ int main(int argc, char* argv[])
                 //r.obj = NULL;
                 r.t = numeric_limits<float>::infinity();
                 r.d = camera.gaze*camera.near_distance + u_axis*u - camera.up*v;
-                for(auto &mesh : scene.meshes)
-                {
-                  r.mesh_intersect(mesh, 0, numeric_limits<float>::infinity());
-                }
+                //intersection test for all objects in the scene
+                intersection_test(r,
+                                  scene.meshes,
+                                  scene.triangles,
+                                  scene.spheres,
+                                  shadow_ray_epsilon);
 
-                for(auto &triangle : scene.triangles)
-                {
-                  r.triangle_intersect(triangle, 0, numeric_limits<float>::infinity());
-                }
-
-                for(auto &sphere : scene.spheres)
-                {
-                  r.sphere_intersect(sphere);
-                }
                 if(r.t<numeric_limits<float>::infinity())
                 {
                   Material material;
@@ -194,18 +204,39 @@ int main(int argc, char* argv[])
                   Vec3f accumulator(scene.ambient_light.elementwiseMultip(material.ambient));
                   // TODO: might require clamping
 
-                  //Diffuse component calculation
                   for(auto &light : scene.point_lights)
                   {
-                    Vec3f vector2light(light.position-point_of_intersection);
-                    float distance2light = vector2light.length();   //float distance to point light
-                    vector2light = vector2light*(1/distance2light); //Normalized vector
-                    Vec3f diffuse_component = diffuse_shading(vector2light,
-                                                              normal,
-                                                              material.diffuse,
-                                                              light.intensity,
-                                                              distance2light);
-                    accumulator=accumulator+diffuse_component;
+                    ray shadowRay(point_of_intersection,
+                                  light.position-point_of_intersection);
+                    float distance2light = shadowRay.d.length();        //float distance to point light
+                    Vec3f vector2light(shadowRay.d*(1/distance2light)); //Normalized vector
+
+                    //intersection test for all objects in the scene
+                    /*intersection_test(shadowRay,
+                                      scene.meshes,
+                                      scene.triangles,
+                                      scene.spheres,
+                                      shadow_ray_epsilon);
+                    //object is in shadow
+                    // cout<<"Shadow t:"<<shadowRay.t<<endl;
+                    // cout<<"Distance2Light:"<<distance2light<<endl;
+                    if(shadowRay.t<distance2light)
+                    {
+                      continue;
+                    }*/
+                    //object is not in shadow, calculate diffuse component
+                    Vec3f diffuse_component = ds_shading(vector2light,
+                                                         normal,
+                                                         material.diffuse,
+                                                         light.intensity,
+                                                         distance2light);
+                    Vec3f specular_component = ds_shading((vector2light+(-r.d)).normalize(),
+                                                          normal,
+                                                          material.specular,
+                                                          light.intensity,
+                                                          distance2light,
+                                                          material.phong_exponent);
+                    accumulator=accumulator+diffuse_component+specular_component;
                   }
                   image[pixel_channel]=image[pixel_channel]+accumulator.x > 255 ? 255 : image[pixel_channel]+accumulator.x;
                   image[pixel_channel+1]=image[pixel_channel+1]+accumulator.y > 255 ? 255 : image[pixel_channel+1]+accumulator.y;
