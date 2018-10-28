@@ -214,7 +214,7 @@ int main(int argc, char* argv[])
                     Vec3f vector2light(shadowRay.d*(1/distance2light)); //Normalized vector
 
                     //intersection test for all objects in the scene
-                    /*intersection_test(shadowRay,
+                    intersection_test(shadowRay,
                                       scene.meshes,
                                       scene.triangles,
                                       scene.spheres,
@@ -222,10 +222,10 @@ int main(int argc, char* argv[])
                     //object is in shadow
                     // cout<<"Shadow t:"<<shadowRay.t<<endl;
                     // cout<<"Distance2Light:"<<distance2light<<endl;
-                    if(shadowRay.t<distance2light)
+                    if(shadowRay.t<1)
                     {
                       continue;
-                    }*/
+                    }
                     //object is not in shadow, calculate diffuse component
                     Vec3f diffuse_component = ds_shading(vector2light,
                                                          normal,
