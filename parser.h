@@ -126,6 +126,7 @@ namespace parser
     struct Mesh
     {
         int material_id;
+        int face_id;
         std::vector<Face> faces;
     };
 
@@ -194,6 +195,7 @@ namespace parser
         ray(const Vec3f &_e, const Vec3f &_d, float _t = std::numeric_limits<float>::infinity()){this->t=_t; this->e=_e; this->d=_d;};
         ray(const ray &r2){*this=r2;}
         void operator=(const ray &r2){this->t=r2.t; this->e=r2.e; this->d=r2.d;}
+
         void sphere_intersect(Sphere &sphere, const float &t0)
         {
             Vec3f ce = {this->e.x - sphere.center.x, this->e.y - sphere.center.y, this->e.z - sphere.center.z};
@@ -216,12 +218,14 @@ namespace parser
         }
         void mesh_intersect(Mesh &mesh, const float &t0)
         {
-          for(auto &face : mesh.faces)
+          int size = mesh.faces.size();
+          for(int i = 0; i < size; i++)
           {
-            if(triangle_mesh_intersect_subroutine(face, t0))
+            if(triangle_mesh_intersect_subroutine(mesh.faces[i], t0))
             {
               this->obj = &mesh;
               this->c='m';
+              mesh.face_id = i;
             }
           }
         }

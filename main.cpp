@@ -121,7 +121,7 @@ Vec3f raycolor(ray &r,
       {
         Mesh* ptr = ((Mesh *) r.obj);
         material_id = ptr->material_id;
-        normal = ptr->faces[0].normal;
+        normal = ptr->faces[ptr->face_id].normal;
         break;
       }
       case 't':
@@ -162,23 +162,6 @@ Vec3f raycolor(ray &r,
       //object is in shadow
       // cout<<"Shadow t:"<<shadowRay.t<<endl;
       // cout<<"Distance2Light:"<<distance2light<<endl;
-      if(shadowRay.t<1)
-      {
-        continue;
-      }
-      //object is not in shadow, calculate diffuse component
-      Vec3f diffuse_component = ds_shading(vector2light,
-                                           normal,
-                                           material.diffuse,
-                                           light.intensity,
-                                           distance2light);
-      Vec3f specular_component = ds_shading((vector2light+(-r.d)).normalize(),
-                                            normal,
-                                            material.specular,
-                                            light.intensity,
-                                            distance2light,
-                                            material.phong_exponent);
-      accumulator = accumulator+diffuse_component+specular_component;
       if (material.mirror.x || material.mirror.y || material.mirror.z) {
         Vec3f R = reflection(r.d, normal); 
         ray reflected_ray(point_of_intersection + R * shadow_ray_epsilon, R);
@@ -196,6 +179,24 @@ Vec3f raycolor(ray &r,
                                             ));
  
       }
+
+      if(shadowRay.t<1)
+      {
+        continue;
+      }
+      //object is not in shadow, calculate diffuse component
+      Vec3f diffuse_component = ds_shading(vector2light,
+                                           normal,
+                                           material.diffuse,
+                                           light.intensity,
+                                           distance2light);
+      Vec3f specular_component = ds_shading((vector2light+(-r.d)).normalize(),
+                                            normal,
+                                            material.specular,
+                                            light.intensity,
+                                            distance2light,
+                                            material.phong_exponent);
+      accumulator = accumulator+diffuse_component+specular_component;
     }
   }
   return accumulator;
