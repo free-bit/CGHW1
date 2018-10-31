@@ -27,10 +27,10 @@ Vec3f ds_shading(const Vec3f &v, //v is used for both wi & h
   return coeff.elementwiseMultip((I*(1/(r*r)))*(pow(max((float)0, n*v),p)));
 }
 
-Vec3f reflection(const Vec3f &d, const Vec3f &n) 
-{ 
-    return d - n * (2 * (d * n)); // d - 2(d.n)n 
-} 
+Vec3f reflection(const Vec3f &d, const Vec3f &n)
+{
+    return d - n * (2 * (d * n)); // d - 2(d.n)n
+}
 
 //Ray-Triangle intersection
 //Parameters: r parameter is mutable, others are constant
@@ -163,7 +163,7 @@ Vec3f raycolor(ray &r,
       // cout<<"Shadow t:"<<shadowRay.t<<endl;
       // cout<<"Distance2Light:"<<distance2light<<endl;
       if (material.mirror.x || material.mirror.y || material.mirror.z) {
-        Vec3f R = reflection(r.d, normal); 
+        Vec3f R = reflection(r.d, normal);
         ray reflected_ray(point_of_intersection + R * shadow_ray_epsilon, R);
         accumulator = accumulator +  material.mirror.elementwiseMultip(raycolor(reflected_ray,
                                             meshes,
@@ -177,7 +177,7 @@ Vec3f raycolor(ray &r,
                                             shadow_ray_epsilon,
                                             depth + 1
                                             ));
- 
+
       }
 
       if(shadowRay.t<1)
@@ -200,7 +200,7 @@ Vec3f raycolor(ray &r,
     }
   }
   return accumulator;
-  
+
 }
 
 int main(int argc, char* argv[])
@@ -229,10 +229,14 @@ int main(int argc, char* argv[])
 
         int img_width = camera.image_width,
             img_height = camera.image_height;
-        Vec3f u_axis = camera.up.crossProduct(-camera.gaze);
+        Vec3f gaze   = camera.gaze.normalize();
+        Vec3f w_axis = -gaze;
+        Vec3f u_axis = camera.up.crossProduct(w_axis).normalize();
+        Vec3f v_axis = w_axis.crossProduct(u_axis);
 
         float horizontal = (camera.near_plane.r-camera.near_plane.l)/img_width,
-              vertical = (camera.near_plane.t-camera.near_plane.b)/img_height;
+              vertical = (camera.near_plane.t-camera.near_plane.b)/img_height,
+              vertical_top = camera.near_plane.b+vertical*(img_height-0.5);
 
         unsigned char* image = new unsigned char [img_width * img_height * 3];
 
@@ -245,7 +249,7 @@ int main(int argc, char* argv[])
         r.obj = NULL;
         r.e = camera.position; //eyepoint
 
-        float v = camera.near_plane.b+vertical*0.5;
+        float v = vertical_top;
 
         for (int y = 0; y < img_height; y++)
         {
@@ -254,7 +258,7 @@ int main(int argc, char* argv[])
             {
                 //r.obj = NULL;
                 r.t = numeric_limits<float>::infinity();
-                r.d = camera.gaze*camera.near_distance + u_axis*u - camera.up*v;
+                r.d = gaze*camera.near_distance + u_axis*u + v_axis*v;
 
                 Vec3f color = raycolor(r,
                                        scene.meshes,
@@ -273,7 +277,7 @@ int main(int argc, char* argv[])
 
                 u += horizontal;
             }
-            v += vertical;
+            v -= vertical;
         }
 
         write_ppm(img_name.c_str(), image, img_width, img_height);
