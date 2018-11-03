@@ -176,7 +176,7 @@ Vec3f raycolor(ray &r,
                         meshes,
                         triangles,
                         spheres,
-                        shadow_ray_epsilon);
+                        shadow_ray_epsilon/distance2light);
       //object is in shadow
       // cout<<"Shadow t:"<<shadowRay.t<<endl;
       // cout<<"Distance2Light:"<<distance2light<<endl;
