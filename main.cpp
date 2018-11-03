@@ -147,8 +147,8 @@ Vec3f raycolor(ray &r,
     accumulator = accumulator + ambient_light.elementwiseMultip(material.ambient);
 
     if (material.mirror.x || material.mirror.y || material.mirror.z) {
-      Vec3f R = reflection(r.d, normal);
-      ray reflected_ray(point_of_intersection + R * shadow_ray_epsilon, R);
+      Vec3f R = reflection(r.d.normalize(), normal);
+      ray reflected_ray(point_of_intersection, R);
       accumulator = accumulator +  material.mirror.elementwiseMultip(raycolor(reflected_ray,
                                           meshes,
                                           triangles,
@@ -199,9 +199,10 @@ Vec3f raycolor(ray &r,
                                             material.phong_exponent);
       accumulator = accumulator+diffuse_component+specular_component;
     }
+    return accumulator;
   }
-  return accumulator;
-
+  Vec3f bg_float(background_color.r, background_color.g, background_color.b);
+  return bg_float;
 }
 
 int main(int argc, char* argv[])
