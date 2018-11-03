@@ -146,6 +146,24 @@ Vec3f raycolor(ray &r,
     //Ambient component calculation
     accumulator = accumulator + ambient_light.elementwiseMultip(material.ambient);
 
+    if (material.mirror.x || material.mirror.y || material.mirror.z) {
+      Vec3f R = reflection(r.d, normal);
+      ray reflected_ray(point_of_intersection + R * shadow_ray_epsilon, R);
+      accumulator = accumulator +  material.mirror.elementwiseMultip(raycolor(reflected_ray,
+                                          meshes,
+                                          triangles,
+                                          spheres,
+                                          ambient_light,
+                                          point_lights,
+                                          materials,
+                                          background_color,
+                                          max_recursion_depth,
+                                          shadow_ray_epsilon,
+                                          depth + 1
+                                          ));
+
+    }
+
     for(auto &light : point_lights)
     {
       ray shadowRay(point_of_intersection,
@@ -162,23 +180,6 @@ Vec3f raycolor(ray &r,
       //object is in shadow
       // cout<<"Shadow t:"<<shadowRay.t<<endl;
       // cout<<"Distance2Light:"<<distance2light<<endl;
-      if (material.mirror.x || material.mirror.y || material.mirror.z) {
-        Vec3f R = reflection(r.d, normal);
-        ray reflected_ray(point_of_intersection + R * shadow_ray_epsilon, R);
-        accumulator = accumulator +  material.mirror.elementwiseMultip(raycolor(reflected_ray,
-                                            meshes,
-                                            triangles,
-                                            spheres,
-                                            ambient_light,
-                                            point_lights,
-                                            materials,
-                                            background_color,
-                                            max_recursion_depth,
-                                            shadow_ray_epsilon,
-                                            depth + 1
-                                            ));
-
-      }
 
       if(shadowRay.t<1)
       {
