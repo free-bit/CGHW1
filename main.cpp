@@ -191,7 +191,7 @@ Vec3f raycolor(ray &r,
                                            material.diffuse,
                                            light.intensity,
                                            distance2light);
-      Vec3f specular_component = ds_shading((vector2light+(-r.d)).normalize(),
+      Vec3f specular_component = ds_shading((vector2light+(-r.d).normalize()).normalize(),
                                             normal,
                                             material.specular,
                                             light.intensity,
